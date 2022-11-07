@@ -4,12 +4,49 @@
 
 #[no_mangle]
 extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut SystemTable) -> usize {
-    // The array that will hold the UTF-16 characters.
-    // The length of "Hello World!\n" is 13, but the array's length is 14 because it must
-    // be null-terminated, that is, it must end with a 0.
-    let mut string_u16 = [0u16; 14];
+    // Getting the pointer to the Boot Services from the System Table
+    let boot_services = unsafe { (*sys_table).boot_services };
+    // The Graphics Output Protocol (GOP) GUID
+    let gop_guid = Guid {
+        first_chunk: 0x9042a9de,
+        second_chunk: 0x23dc,
+        third_chunk: 0x4a38,
+        other_chunks: [0x96, 0xfb, 0x7a, 0xde, 0xd0, 0x80, 0x51, 0x6a]
+    };
+    // The location which will hold a pointer to a GOP on a successful call to locate_protocol
+    let mut gop: *mut core::ffi::c_void = core::ptr::null_mut();
+    // The raw pointer to the GOP Guid
+    let guid_ptr = &gop_guid as *const Guid;
+    // An optional argument which we're just going to pass null into
+    let registration = core::ptr::null_mut();
+    // Location where the GOP pointer should be placed into on a successful locate_protocol invocation
+    let gop_ptr = &mut gop as *mut _;
+    // Invoking the Boot Services locate_protocol function to find the GOP
+    let locate_gop_status = unsafe { ((*boot_services).locate_protocol)(
+        guid_ptr,
+        registration,
+        gop_ptr
+    ) };
+
+    if locate_gop_status != 0 {
+        let mut string_u16 = [0u16; 21];
+        // The string as a string slice
+        let string = "Failed to locate GOP\n";
+        // Converting the string slice to UTF-16 characters and placing the characters
+        // in the array
+        string.encode_utf16()
+            .enumerate()
+            .for_each(|(i, letter)| string_u16[i] = letter);
+        // Getting the pointer to the Simple Text Output Protocol from the System Table
+        let simple_text_output = unsafe { (*sys_table).simple_text_output };
+        // Getting the output_string function from the Simple Text Output Protocol and
+        // calling it with the required parameters to print "Failed to locate GOP\n"
+        unsafe { ((*simple_text_output).output_string)(simple_text_output, string_u16.as_mut_ptr()); }
+        loop {}
+    }
+    let mut string_u16 = [0u16; 29];
     // The string as a string slice
-    let string = "Hello World!\n";
+    let string = "Successfully located the GOP\n";
     // Converting the string slice to UTF-16 characters and placing the characters
     // in the array
     string.encode_utf16()
@@ -18,7 +55,7 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
     // Getting the pointer to the Simple Text Output Protocol from the System Table
     let simple_text_output = unsafe { (*sys_table).simple_text_output };
     // Getting the output_string function from the Simple Text Output Protocol and
-    // calling it with the required parameters to print "Hello World!\n"
+    // calling it with the required parameters to print "Successfully located the GOP\n"
     unsafe { ((*simple_text_output).output_string)(simple_text_output, string_u16.as_mut_ptr()); }
     // Returning 0 because the function expects it
     0
@@ -27,11 +64,23 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
 #[repr(C)]
 struct SystemTable {
     unneeded: [u8; 60],
-    simple_text_output: *mut SimpleTextOutput
+    simple_text_output: *mut SimpleTextOutput,
+    unneeded2: [u8; 24],
+    boot_services: *const BootServices
 }
 
 // A number that uniquely identifies a protocol
-type Guid = u128;
+#[repr(C)]
+struct Guid {
+    first_chunk: u32,
+    second_chunk: u16,
+    third_chunk: u16,
+    other_chunks: [u8; 8]
+}
+
+// Returned by the UEFI functions to indicate the success
+// or failure of the function
+type Status = usize;
 
 // A bunch of other useful functions provided by the firmware
 // and accessible from the `SystemTable`
@@ -45,7 +94,7 @@ struct BootServices {
         protocol: *const Guid,
         registration: *const core::ffi::c_void,
         interface: *mut *mut core::ffi::c_void
-    ) -> usize
+    ) -> Status
 }
 
 
@@ -74,13 +123,13 @@ struct GraphicsOutput {
         // The pointer to a location in which the firmware will place a pointer
         // to the information collected on a successful return
         info: *const *const GraphicsModeInfo
-    ) -> usize,
+    ) -> Status,
     // Sets the video device into the mode associated with `mode_number` and clears
     // the visible portions of the output display to black
     set_mode: extern "efiapi" fn(
         this: *mut GraphicsOutput,
         mode_number: u32
-    ) -> usize,
+    ) -> Status,
     // The Blt function pointer, which we don't need
     unneeded: [u8; 8],
     // Gives information about the current graphics mode
