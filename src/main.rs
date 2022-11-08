@@ -122,7 +122,7 @@ struct GraphicsOutput {
         size_of_info: *const usize,
         // The pointer to a location in which the firmware will place a pointer
         // to the information collected on a successful return
-        info: *const *const GraphicsModeInfo
+        info: *mut *const GraphicsModeInfo
     ) -> Status,
     // Sets the video device into the mode associated with `mode_number` and clears
     // the visible portions of the output display to black
