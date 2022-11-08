@@ -54,7 +54,7 @@ struct GraphicsOutput {
         size_of_info: *const usize,
         // The pointer to a location in which the firmware will place a pointer
         // to the information collected on a successful return
-        info: *const *const GraphicsModeInfo
+        info: *mut *const GraphicsModeInfo
     ) -> usize,
 }
 
