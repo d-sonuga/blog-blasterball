@@ -82,15 +82,12 @@ struct GraphicsModeInfo {
 }
 
 // Defines how to interpret the bits that represent a single pixel
-#[repr(transparent)]
-struct PixelFormat(u32);
-
-impl PixelFormat {
-    const RED_GREEN_BLUE_RESERVED: u32 = 0;
-    const BLUE_GREEN_RED_RESERVED: u32 = 1;
-    const BIT_MASK: u32 = 2;
-    const BLT_ONLY: u32 = 3;
-    const FORMAT_MAX: u32 = 4;
+#[repr(u32)]
+enum PixelFormat {
+    RedGreenBlueReserved = 0,
+    BlueGreenRedReserved = 1,
+    BitMask = 2,
+    BltOnly = 3
 }
 
 // A description of the color channels of a pixel in the GOP's framebuffer
