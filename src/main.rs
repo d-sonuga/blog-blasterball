@@ -53,6 +53,8 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
     let mode = unsafe { (*gop).mode };
     // Get the value of the max mode number from the `mode`
     let max_mode = unsafe { (*mode).max_mode };
+    // The desired mode to set after finding it in this for loop
+    let mut desired_mode = 0;
     // The valid mode numbers are in the range 0..=`max_mode`-1
     for mode_number in 0..max_mode {
         // The size of our `GraphicsModeInfo` structure
@@ -89,19 +91,77 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
             unsafe { ((*simple_text_output).output_string)(simple_text_output, string_u16.as_mut_ptr()); }
             loop {}
         }
+        
+        let horizontal_resolution = unsafe { (*mode).horizontal_resolution };
+        let vertical_resolution = unsafe { (*mode).vertical_resolution };
+        let pixel_format = unsafe { (*mode).pixel_format };
+        // Looking for our desired mode
+        if horizontal_resolution == 640 && vertical_resolution == 480
+            && pixel_format == PixelFormat::BlueGreenRedReserved {
+            desired_mode = mode_number;
+            break;
+        }
+        // Halt with an error if the desired mode wasn't found
+        if mode_number == max_mode - 1 {
+            let mut string_u16 = [0u16; 31];
+            let string = "Couldn't find the desired mode\n";
+            string.encode_utf16()
+                .enumerate()
+                .for_each(|(i, letter)| string_u16[i] = letter);
+            let simple_text_output = unsafe { (*sys_table).simple_text_output };
+            unsafe { ((*simple_text_output).output_string)(simple_text_output, string_u16.as_mut_ptr()); }
+            loop {}
+        }
     }
 
-    // Printing a success message after querying all the modes successfully
-    let mut string_u16 = [0u16; 31];
-    let string = "Successfully queried all modes\n";
-    string.encode_utf16()
-        .enumerate()
-        .for_each(|(i, letter)| string_u16[i] = letter);
-    let simple_text_output = unsafe { (*sys_table).simple_text_output };
-    unsafe { ((*simple_text_output).output_string)(simple_text_output, string_u16.as_mut_ptr()); }
+    // Setting the mode to our desired mode
+    let set_mode_status = unsafe { ((*gop).set_mode)(
+        gop,
+        desired_mode
+    ) };
+
+    // Checking if it is a success
+    if set_mode_status != 0 {
+        let mut string_u16 = [0u16; 31];
+        let string = "Failed to set the desired mode\n";
+        string.encode_utf16()
+            .enumerate()
+            .for_each(|(i, letter)| string_u16[i] = letter);
+        let simple_text_output = unsafe { (*sys_table).simple_text_output };
+        unsafe { ((*simple_text_output).output_string)(simple_text_output, string_u16.as_mut_ptr()); }
+        loop {}
+    } else {
+        let mut string_u16 = [0u16; 31];
+        let string = "Successfully set the desired mode\n";
+        string.encode_utf16()
+            .enumerate()
+            .for_each(|(i, letter)| string_u16[i] = letter);
+        let simple_text_output = unsafe { (*sys_table).simple_text_output };
+        unsafe { ((*simple_text_output).output_string)(simple_text_output, string_u16.as_mut_ptr()); }
+    }
 
     // Returning 0 because the function expects it
     0
+}
+
+// A function that prints a single digit in the range 0..=9
+fn printdigit(n: u32, simple_text_output: *mut SimpleTextOutput) {
+    // The code for the digit that will be printed
+    let mut digit_u16 = [48 + n as u16, 0];
+    // Printing the digit with the Simple Text Output protocol's output_string function
+    unsafe { ((*simple_text_output).output_string)(simple_text_output, digit_u16.as_mut_ptr()); }
+}
+
+// Prints an integer n
+fn printint(n: u32, simple_text_output: *mut SimpleTextOutput) {
+    if n >= 10 {
+        let quotient = n / 10;
+        let remainder = n % 10;
+        printint(quotient, simple_text_output);
+        printdigit(remainder, simple_text_output);
+    } else {
+        printdigit(n, simple_text_output);
+    }
 }
 
 #[repr(C)]
@@ -204,6 +264,7 @@ struct GraphicsModeInfo {
 }
 
 // Defines how to interpret the bits that represent a single pixel
+#[derive(PartialEq, Clone, Copy)]
 #[repr(u32)]
 enum PixelFormat {
     RedGreenBlueReserved = 0,
