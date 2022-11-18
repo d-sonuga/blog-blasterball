@@ -29,7 +29,7 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
     ) };
 
     if locate_gop_status != 0 {
-        let mut string_u16 = [0u16; 21];
+        let mut string_u16 = [0u16; 22];
         // The string as a string slice
         let string = "Failed to locate GOP\n";
         // Converting the string slice to UTF-16 characters and placing the characters
@@ -44,7 +44,7 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
         unsafe { ((*simple_text_output).output_string)(simple_text_output, string_u16.as_mut_ptr()); }
         loop {}
     }
-    let mut string_u16 = [0u16; 29];
+    let mut string_u16 = [0u16; 30];
     // The string as a string slice
     let string = "Successfully located the GOP\n";
     // Converting the string slice to UTF-16 characters and placing the characters
