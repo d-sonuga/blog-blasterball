@@ -29,7 +29,7 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
     ) };
 
     if locate_gop_status != 0 {
-        let mut string_u16 = [0u16; 21];
+        let mut string_u16 = [0u16; 22];
         // The string as a string slice
         let string = "Failed to locate GOP\n";
         // Converting the string slice to UTF-16 characters and placing the characters
@@ -82,7 +82,7 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
         // Checking if the status is not a success
         // If it's not print and error message and halt (loop endlessly)
         if query_status != 0 {
-            let mut string_u16 = [0u16; 18];
+            let mut string_u16 = [0u16; 19];
             let string = "query_mode failed\n";
             string.encode_utf16()
                 .enumerate()
@@ -103,7 +103,7 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
         }
         // Halt with an error if the desired mode wasn't found
         if mode_number == max_mode - 1 {
-            let mut string_u16 = [0u16; 31];
+            let mut string_u16 = [0u16; 32];
             let string = "Couldn't find the desired mode\n";
             string.encode_utf16()
                 .enumerate()
@@ -122,7 +122,7 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
 
     // Checking if it is a success
     if set_mode_status != 0 {
-        let mut string_u16 = [0u16; 31];
+        let mut string_u16 = [0u16; 32];
         let string = "Failed to set the desired mode\n";
         string.encode_utf16()
             .enumerate()
@@ -131,7 +131,7 @@ extern "efiapi" fn efi_main(handle: *const core::ffi::c_void, sys_table: *mut Sy
         unsafe { ((*simple_text_output).output_string)(simple_text_output, string_u16.as_mut_ptr()); }
         loop {}
     } else {
-        let mut string_u16 = [0u16; 31];
+        let mut string_u16 = [0u16; 35];
         let string = "Successfully set the desired mode\n";
         string.encode_utf16()
             .enumerate()
