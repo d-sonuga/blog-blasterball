@@ -183,7 +183,7 @@ impl BootServices {
         // The location which will hold a pointer to a protocol on a successful call to locate_protocol
         let mut protocol: *mut core::ffi::c_void = core::ptr::null_mut();
         // The raw pointer to the protocol Guid
-        let guid_ptr = protocol as *const Guid;
+        let guid_ptr = protocol_guid as *const Guid;
         // An optional argument which we're just going to pass null into
         let registration = core::ptr::null_mut();
         // Location where the protocol pointer should be placed into on a successful locate_protocol invocation
