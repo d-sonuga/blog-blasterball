@@ -25,7 +25,7 @@ fn main() {
         .arg("-drive")
         .arg(&format!("if=pflash,unit=1,format=raw,file={}/OVMF_VARS.fd", OVMF_PATH))
         .arg("-drive")
-        .arg("format=raw,file=fat:rw:blasterball/target/x86_64-unknown-uefi/debug/")
+        .arg("format=raw,file=fat:rw:target/x86_64-unknown-uefi/debug/")
         .status()
         .unwrap();
     if !status.success() {
