@@ -5,7 +5,7 @@ use crate::bitmap::{draw_bitmap, Bitmap};
 const NO_OF_BLOCK_ROWS: usize = 4;
 
 pub fn blasterball(screen: &mut Screen) -> ! {
-    // Loading the into an array
+    // Loading the blocks into an array
     let blue_block_bytes = include_bytes!("./assets/blue_block.bmp");
     let blue_block = Bitmap::new(blue_block_bytes);
     let cyan_block_bytes = include_bytes!("./assets/cyan_block.bmp");
