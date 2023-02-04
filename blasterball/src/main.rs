@@ -59,6 +59,7 @@ extern "efiapi" fn efi_main(
     interrupts::disable_interrupts();
     let gdt_pointer = gdt.as_pointer();
     gdt.load(&gdt_pointer);
+    interrupts::enable_interrupts();
     gdt::CS.set(cs);
     gdt::DS.set(ds);
     gdt::SS.set(ds);
