@@ -17,6 +17,7 @@ pub fn enable_interrupts() {
 
 // An entry in the IDT
 #[repr(C)]
+#[derive(Clone, Copy)]
 pub struct Entry {
     // The lower 16 bits of the handler's interrupt service routine
     handler_ptr_low: u16,
@@ -47,6 +48,7 @@ impl Entry {
 
 // Options in an IDT entry
 #[repr(transparent)]
+#[derive(Clone, Copy)]
 struct Options(u16);
 
 // The Interrupt Descriptor Table
@@ -76,6 +78,37 @@ pub struct IDT {
     pub control_protection_exception: Entry,
     reserved2: [Entry; 10],
     pub interrupts: [Entry; 256 - 32]
+}
+
+impl IDT {
+    pub fn new() -> Self {
+        Self {
+            divide_by_zero: Entry::empty(),
+            debug: Entry::empty(),
+            nmi_interrupt: Entry::empty(),
+            breakpoint: Entry::empty(),
+            overflow: Entry::empty(),
+            bound_range_exceeded: Entry::empty(),
+            invalid_opcode: Entry::empty(),
+            device_not_available: Entry::empty(),
+            double_fault: Entry::empty(),
+            coprocessor_segment_overrun: Entry::empty(),
+            invalid_tss: Entry::empty(),
+            segment_not_present: Entry::empty(),
+            stack_segment_fault: Entry::empty(),
+            general_protection: Entry::empty(),
+            page_fault: Entry::empty(),
+            reserved1: Entry::empty(),
+            floating_point_error: Entry::empty(),
+            alignment_check: Entry::empty(),
+            machine_check: Entry::empty(),
+            simd_floating_point_exception: Entry::empty(),
+            virtualization_exception: Entry::empty(),
+            control_protection_exception: Entry::empty(),
+            reserved2: [Entry::empty(); 10],
+            interrupts: [Entry::empty(); 256 - 32]
+        }
+    }
 }
 
 // The values pushed on the stack when an interrupt service routine
