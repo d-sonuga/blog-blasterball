@@ -66,6 +66,7 @@ extern "efiapi" fn efi_main(
 
     // Attempting to invoke the breakpoint exception
     unsafe { core::arch::asm!("int3"); }
+    loop {}
 
     game::blasterball(screen);
     
