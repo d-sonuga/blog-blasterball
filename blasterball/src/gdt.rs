@@ -81,7 +81,7 @@ impl Descriptor {
     const GRANULARITY: u64 = 1 << 55;
     const LIMIT_0_15: u64 = 0xffff;
     const LIMIT_48_51: u64 = 0xf << 48;
-    const BIT_SIZE: u64 = 1 << 54;
+    const BIT_SIZE: u64 = 0 << 54;
     const IS_CODE: u64 = 1 << 53;
     const EXECUTABLE: u64 = 1 << 43;
     const NON_SYSTEM_SEGMENT: u64 = 1 << 44;
@@ -152,7 +152,7 @@ impl SegmentRegister for DS {
 
 impl SegmentRegister for SS {
     fn set(&self, selector: SegmentSelector) {
-        unsafe { asm!("mov ds, ax", in("ax") selector.0); }
+        unsafe { asm!("mov ss, ax", in("ax") selector.0); }
     }
 }
 
