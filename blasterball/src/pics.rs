@@ -52,9 +52,16 @@ impl PICs {
         wait();
 
         // Setup base offsets
-        self.first.command.write(self.first.offset);
+        self.first.data.write(self.first.offset);
         wait();
-        self.second.command.write(self.second.offset);
+        self.second.data.write(self.second.offset);
+        wait();
+
+        // Tell first that there is a second PIC at IRQ 2
+        self.first.data.write(4);
+        wait();
+        // Tell the second PIC it's connected to the first's line 2
+        self.second.data.write(2);
         wait();
 
         // Telling the PICs about the environment they're in
