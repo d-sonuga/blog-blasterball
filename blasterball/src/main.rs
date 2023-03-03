@@ -117,7 +117,7 @@ fn setup_idt(sel: SegmentSelector) {
     idt.breakpoint = Entry::exception(ServiceRoutine(breakpoint_handler), sel);
     idt.page_fault = Entry::exception(ServiceRoutineWithErrCode(page_fault_handler), sel);
     idt.double_fault = Entry::exception(ServiceRoutineWithNoReturn(double_fault_handler), sel);
-    idt.interrupts[0] = Entry::exception(ServiceRoutine(timer_handler), sel);
+    idt.interrupts[0] = Entry::interrupt(ServiceRoutine(timer_handler), sel);
     let pointer = idt.as_pointer();
     interrupts::disable_interrupts();
     interrupts::load_idt(&pointer);

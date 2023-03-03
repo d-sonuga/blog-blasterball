@@ -80,7 +80,7 @@ impl PICs {
 
     // Sends the EOI command to the PICs in charge of an interrupt
     // that was just handled
-    pub fn end_of_interrupt(&mut self, number: u8) { // NEW
+    pub fn end_of_interrupt(&mut self, number: u8) {
         self.first.command.write(END_OF_INTERRUPT);
         if number >= 8 {
             self.second.command.write(END_OF_INTERRUPT);    
