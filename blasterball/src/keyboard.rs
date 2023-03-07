@@ -1,4 +1,4 @@
-const EXTENDED_CODE: u8 = 0x0e;
+const EXTENDED_CODE: u8 = 0xe0;
 
 #[derive(Debug)]
 pub enum KeyDirection {
