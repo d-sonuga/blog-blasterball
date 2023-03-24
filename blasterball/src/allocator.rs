@@ -23,7 +23,7 @@ impl ListNode {
 }
 
 // A chunk of memory
-struct MemChunk {
+pub struct MemChunk {
     start_addr: usize,
     size: usize
 }
