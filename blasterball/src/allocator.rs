@@ -111,57 +111,86 @@ impl LinkedListAllocator {
 
     // Manage the free region described by `mem_chunk`
     unsafe fn add_free_region(&mut self, mem_chunk: MemChunk) {
-        let prev_node_ptr = self.head;
+        let mut prev_node_ptr = self.head;
         while let Some(curr_node_ptr) = (*prev_node_ptr).next {
-            let mut chunk_comes_after_free_region = false;
-            let mut chunk_comes_before_free_region = false;
+            let mut chunk_comes_imm_after_curr_region = false;
+            let mut chunk_comes_imm_before_next_region = false;
 
             let region_end_addr = curr_node_ptr as usize + (*curr_node_ptr).size - 1;
             let next_node_ptr_opt = (*curr_node_ptr).next;
 
-            // The memory chunk comes immediately after another free region
+            // The memory chunk comes immediately after the current free region
             // Regions: -----NNNN--------
             // Chunk:   ---------MMM-----
             if mem_chunk.start_addr() == region_end_addr + 1 {
-                chunk_comes_after_free_region = true;
+                chunk_comes_imm_after_curr_region = true;
             }
 
-            // The memory chunk comes immediately before another free region
+            // The memory chunk comes immediately before the next free region
             // Regions: ------NNNN-------
             // Chunk:   ---MMM-----------
             if let Some(next_node_ptr) = next_node_ptr_opt {
                 if (*next_node_ptr).addr() == mem_chunk.end_addr() + 1 {
-                    chunk_comes_before_free_region = true;
+                    chunk_comes_imm_before_next_region = true;
                 }
             }
 
-            if chunk_comes_after_free_region && !chunk_comes_before_free_region {
-                // Merge the new chunk with the region that comes before
+            if chunk_comes_imm_after_curr_region && !chunk_comes_imm_before_next_region {
+                // Merge the new chunk with the current region
                 (*curr_node_ptr).size += mem_chunk.size();
                 return;
             }
 
-            if chunk_comes_before_free_region && !chunk_comes_after_free_region {
+            if chunk_comes_imm_before_next_region && !chunk_comes_imm_after_curr_region {
                 // Shift the node to the mem chunk's start address and increase the size
                 let new_region_start_ptr = mem_chunk.start_addr() as *mut ListNode;
-                let new_region_size = mem_chunk.size() + (*curr_node_ptr).size;
-                new_region_start_ptr.write_unaligned(curr_node_ptr.read_unaligned());
+                let next_node_ptr = next_node_ptr_opt.unwrap();
+                let new_region_size = mem_chunk.size() + (*next_node_ptr).size;
+                new_region_start_ptr.write_unaligned(next_node_ptr.read_unaligned());
                 (*new_region_start_ptr).size = new_region_size;
                 return;
             }
 
             // Regions: ----NNNN---NNNNNN
             // Chunk:   --------MMM------
-            if chunk_comes_before_free_region && chunk_comes_after_free_region {
+            if chunk_comes_imm_before_next_region && chunk_comes_imm_after_curr_region {
                 // Merge the chunk and the second node into the first node
-                let new_region_size = (*curr_node_ptr).size + mem_chunk.size() + (*next_node_ptr_opt.unwrap()).size;
+                let next_node_ptr = next_node_ptr_opt.unwrap();
+                let new_region_size = (*curr_node_ptr).size + mem_chunk.size() + (*next_node_ptr).size;
                 (*curr_node_ptr).size = new_region_size;
+                (*curr_node_ptr).next = (*next_node_ptr).next;
                 return;
             }
+
+            // Memory chunk come immediately before the current free region
+            if mem_chunk.end_addr() + 1 == (*curr_node_ptr).addr() {
+                let new_region_start_ptr = mem_chunk.start_addr() as *mut ListNode;
+                let new_region_size = mem_chunk.size() + (*curr_node_ptr).size;
+                new_region_start_ptr.write_unaligned(curr_node_ptr.read_unaligned());
+                (*new_region_start_ptr).size = new_region_size;
+                (*prev_node_ptr).next = Some(new_region_start_ptr);
+                return;
+            }
+
+            if mem_chunk.start_addr() < (*curr_node_ptr).addr() {
+                // The region to be added doesn't come immediately before or after any free region
+                // but still comes before a region
+                // The region must be placed before those that come after it to maintain
+                // the order
+                // Regions: ---NNN-----------NNNN-----
+                // Chunk:   ----------MMM-------------
+                let mut new_node = mem_chunk.start_addr() as *mut ListNode;
+                (*new_node).size = mem_chunk.size();
+                (*new_node).next = Some(curr_node_ptr);
+                (*prev_node_ptr).next = Some(new_node);
+                return;
+            }
+            
+            prev_node_ptr = curr_node_ptr;
         }
-        // The region to be added doesn't come immediately before or after any free region
-        // Regions: ---NNN-----------NNNN-----
-        // Chunk:   ----------MMM-------------
+        // The region to be added comes after all other regions
+        // Regions: ---NNN----------------
+        // Chunk:   ----------MMM---------
         let mut new_node = mem_chunk.start_addr() as *mut ListNode;
         (*new_node).size = mem_chunk.size();
         (*new_node).next = None;
