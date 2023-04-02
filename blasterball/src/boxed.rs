@@ -36,6 +36,16 @@ impl<T> Box<T> {
         let b = ManuallyDrop::new(b);
         b.ptr
     }
+
+    // Creates a box from a raw pointer to a value already on the heap
+    // and an allocator.
+    // The caller has to ensure that `ptr` is pointing to a valid area on the heap
+    pub unsafe fn from_raw<U>(ptr: *mut U, allocator: *mut LinkedListAllocator) -> Box<U> {
+        Box {
+            ptr,
+            allocator
+        }
+    }
 }
 
 impl<T> core::ops::Drop for Box<T> {
