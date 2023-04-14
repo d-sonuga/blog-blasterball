@@ -136,10 +136,8 @@ impl<T: Clone> Drop for Vec<T> {
     fn drop(&mut self) {
         use core::ptr;
         unsafe {
-            for i in 0..self.len {
-                ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.start_ptr, self.len));
-                (*self.allocator).dealloc(self.start_ptr as *mut u8, self.capacity * mem::size_of::<T>());
-            }
+            ptr::drop_in_place(ptr::slice_from_raw_parts_mut(self.start_ptr, self.len));
+            (*self.allocator).dealloc(self.start_ptr as *mut u8, self.capacity * mem::size_of::<T>());
         };
     }
 }
