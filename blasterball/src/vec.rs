@@ -1,6 +1,7 @@
 use core::mem;
 use crate::allocator::Allocator;
 use core::ops::{Index, IndexMut};
+use core::fmt;
 
 // A growable array on the heap
 pub struct Vec<T: Clone> {
@@ -174,6 +175,22 @@ impl<T: PartialEq + Clone> PartialEq<Vec<T>> for Vec<T> {
     }
 }
 
+impl<T: Clone> Clone for Vec<T> {
+    fn clone(&self) -> Self {
+        let mut new_vec = Vec::with_capacity(self.capacity, self.allocator);
+        self
+            .iter()
+            .for_each(|val| new_vec.push(val.clone()));
+        new_vec
+    }
+}
+
+impl<T: fmt::Debug + Clone> fmt::Debug for Vec<T> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -209,13 +226,13 @@ mod tests {
         assert_eq!(v.pop(), 33);
         assert_eq!(v.len(), 1);
         assert_eq!(v.pop(), 212);
-        assert_eq!(v.len(), 10);
+        assert_eq!(v.len(), 0);
     }
 
     #[should_panic]
     #[test]
     fn test_pop2() {
-        let mut v = Vec::with_capacity(1, successful_allocator());
+        let mut v: Vec<i32> = Vec::with_capacity(1, successful_allocator());
         v.pop();
     }
 
@@ -258,12 +275,12 @@ mod tests {
 
     #[test]
     fn vec_clone() {
-        let v = crate::vec![4, 5, 87777; &AlwaysSuccessfulAllocator];
         let mut v = Vec::with_capacity(3, successful_allocator());
         v.push(4);
         v.push(5);
         v.push(87777);
         let other_v = v.clone();
+        println!("{:?} {:?}", v, other_v);
         assert_eq!(v, other_v);
         assert_eq!(v.len(), other_v.len());
         assert_eq!(v.capacity(), other_v.capacity());
