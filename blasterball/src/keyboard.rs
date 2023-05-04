@@ -1,6 +1,6 @@
 const EXTENDED_CODE: u8 = 0xe0;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum KeyDirection {
     // The key is being released
     Up,

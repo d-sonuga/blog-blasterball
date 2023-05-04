@@ -20,6 +20,12 @@ fn main() {
 
     let status = Command::new("sudo")
         .arg("qemu-system-x86_64")
+        .arg("-enable-kvm")
+        .arg("-vga")
+        .arg("std")
+        .arg("-display")
+        .arg("gtk")
+        .arg("-nodefaults")
         .arg("-drive")
         .arg(&format!("if=pflash,format=raw,unit=0,file={}/OVMF_CODE.fd,readonly=on", OVMF_PATH))
         .arg("-drive")

@@ -74,7 +74,7 @@ impl PICs {
         // Setting the interrupt masks
         // Line 1 on the first PIC is for the keyboard,
         // so setting it to 0
-        self.first.data.write(0b11111101);
+        self.first.data.write(0b11111100);
         self.second.data.write(0b11111111);
     }
 

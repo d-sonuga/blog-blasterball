@@ -99,8 +99,12 @@ extern "efiapi" fn efi_main(
     setup_keyboard();
     setup_pics();
 
-    event_hook::hook_event(EventKind::Timer, boxed_fn::BoxedFn::new(|_| {
-        write!(screen, "Tick");
+    event_hook::hook_event(EventKind::Keyboard, boxed_fn::BoxedFn::new(|event_info| {
+        if let EventInfo::Keyboard(key_event) = event_info {
+            if key_event.direction == keyboard::KeyDirection::Down {
+                write!(screen, "{:?}", key_event.keycode);
+            }
+        }
     }, allocator::get_allocator()));
 
     game::blasterball(screen);
@@ -189,9 +193,8 @@ extern "x86-interrupt" fn double_fault_handler(frame: interrupts::InterruptStack
 
 extern "x86-interrupt" fn timer_handler(frame: interrupts::InterruptStackFrame) {
     let screen = get_screen().unwrap();
-    write!(screen, "!");
     // Notifying the event hooker that the timer event has occured
-    //event_hook::send_event(EventInfo::Timer);
+    event_hook::send_event(EventInfo::Timer);
     // Signalling that the timer interrupt has been handled
     get_pics().unwrap().end_of_interrupt(0);
 }
@@ -199,10 +202,9 @@ extern "x86-interrupt" fn timer_handler(frame: interrupts::InterruptStackFrame) 
 extern "x86-interrupt" fn keyboard_handler(frame: interrupts::InterruptStackFrame) {
     let port = port::Port::new(0x60);
     let scancode = port.read();
-    let screen = get_screen().unwrap();
     if let Ok(Some(event)) = get_keyboard().unwrap().interpret_byte(scancode) {
         // Notifying the event hooker that the keyboard event has occured
-        //event_hook::send_event(EventInfo::Keyboard(event));
+        event_hook::send_event(EventInfo::Keyboard(event));
     }
     // Signalling that the keyboard interrupt has been handled
     get_pics().unwrap().end_of_interrupt(1);
