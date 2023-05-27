@@ -109,7 +109,7 @@ impl FnOnce<(EventInfo,)> for BoxedFn {
 mod tests {
     use super::*;
     use crate::event_hook::EventInfo;
-    use crate::vec;
+    use crate::alloc::vec;
 
     #[test]
     fn test_fn_call() {
