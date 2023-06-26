@@ -30,10 +30,6 @@ pub fn unhook_event(event_kind: EventKind, id: HandlerId) -> Result<(), ()> {
     EVENT_HOOKER.lock().as_mut().unwrap().unhook_event(event_kind, id)
 }
 
-//fn get_event_hooker() -> Option<&'static mut EventHooker> {
-    //unsafe { EVENT_HOOKER.as_mut() }
-//'}
-
 // Mediator between the game code and the interrupt service routines
 pub struct EventHooker<'a> {
     // Functions to be called when the timer event occurs
